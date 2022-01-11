@@ -2,15 +2,30 @@
 
 namespace Uniqoders\Game\Console;
 
+use Exception;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\ChoiceQuestion;
+use Symfony\Component\Console\Question\ConfirmationQuestion;
+use Uniqoders\Game\Console\Player;
+use Uniqoders\Game\Console\Weapons\Lizard;
+use Uniqoders\Game\Console\Weapons\Paper;
+use Uniqoders\Game\Console\Weapons\Rock;
+use Uniqoders\Game\Console\Weapons\Scissors;
+use Uniqoders\Game\Console\Weapons\Spock;
+use Uniqoders\Game\Console\Weapons\Weapon;
 
 class GameCommand extends Command
 {
+    public $players;
+    public $currentRound;
+    public $roundMaxWinner;
+    public $maxRound;
+    public $weapons;
+
     /**
      * Configure the command options.
      *
@@ -20,100 +35,141 @@ class GameCommand extends Command
     {
         $this->setName('game')
             ->setDescription('New game: you vs computer')
-            ->addArgument('name', InputArgument::OPTIONAL, 'what is your name?', 'Player 1');
+            ->addArgument('name', InputArgument::OPTIONAL, 'What is your name?', 'Player 1')
+            ->addArgument('players', InputArgument::OPTIONAL, 'Would you like to add player information?', []);
+
+        $this->currentRound = 1;
+        $this->roundMaxWinner = 3;
+        $this->maxRound = 5;
     }
 
+    /**
+     * 
+     */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $output->write(PHP_EOL . 'Made with ♥ by Uniqoders.' . PHP_EOL . PHP_EOL);
 
         $player_name = $input->getArgument('name');
 
-        $players = [
+        $playersDefault = [
             'player' => [
                 'name' => $player_name,
-                'stats' => [
-                    'draw' => 0,
-                    'victory' => 0,
-                    'defeat' => 0,
-                ]
+                'type' => Player::HUMAN,
             ],
             'computer' => [
                 'name' => 'Computer',
-                'stats' => [
-                    'draw' => 0,
-                    'victory' => 0,
-                    'defeat' => 0,
-                ]
+                'type' => Player::COMPUTER,
             ]
         ];
 
-        // Weapons available
-        $weapons = [
-            0 => 'Scissors',
-            1 => 'Rock',
-            2 => 'Paper'
-        ];
+        $players = $input->getArgument('players') ?: $playersDefault;
 
-        // Rules to win
-        $rules = [
-            0 => 2,
-            1 => 0,
-            2 => 1
-        ];
-
-        $round = 1;
-        $max_round = 5;
-
+        $this->players = Game::initPlayers($players);
         $ask = $this->getHelper('question');
+
+        // init weapons defaults
+        $this->weapons[] = new Scissors();
+        $this->weapons[] = new Rock();
+        $this->weapons[] = new Paper();
+
+        $question = new ConfirmationQuestion('Would you like to play "The Big Bang Theory" rules? y/n ' . PHP_EOL, false, '/^(y|j)/i');
+        $resultQuestion = $ask->ask($input, $output, $question);
+
+        // add the new weapons if user wants to play the version "The Big Bang Theory"
+        if ($resultQuestion) {
+            $this->weapons[] = new Lizard();
+            $this->weapons[] = new Spock();
+        }
+
+        $weaponsText = Game::getTextWeapons($this->weapons);
 
         do {
             // User selection
-            $question = new ChoiceQuestion('Please select your weapon', array_values($weapons), 1);
+            $player = $this->players['player'];
+            $computer = $this->players['computer'];
+            
+            $optionPlayer = $player->getRoundOptions()[$this->currentRound] ?? array_rand($this->weapons);
+
+            // ask player for weapon to use
+            $question = new ChoiceQuestion('Please select your weapon', array_values($weaponsText), $optionPlayer);
             $question->setErrorMessage('Weapon %s is invalid.');
+            $user_weapon_text = $ask->ask($input, $output, $question);
 
-            $user_weapon = $ask->ask($input, $output, $question);
-            $output->writeln('You have just selected: ' . $user_weapon);
-            $user_weapon = array_search($user_weapon, $weapons);
+            $output->writeln('You have just selected: ' . $user_weapon_text);
 
-            // Computer selection
-            $computer_weapon = array_rand($weapons);
-            $output->writeln('Computer has just selected: ' . $weapons[$computer_weapon]);
+            // search index reponse array
+            $user_weapon = array_search($user_weapon_text, $weaponsText);
 
-            if ($rules[$user_weapon] === $computer_weapon) {
-                $players['player']['stats']['victory']++;
-                $players['computer']['stats']['defeat']++;
+            // set weapon computer or generate random option
+            $computer_weapon = $computer->getRoundOptions()[$this->currentRound] ?? array_rand($this->weapons);
 
-                $output->writeln($player_name . ' win!');
-            } else if ($rules[$computer_weapon] === $user_weapon) {
-                $players['player']['stats']['defeat']++;
-                $players['computer']['stats']['victory']++;
+            $output->writeln('Computer has just selected: ' . $weaponsText[$computer_weapon]);
+            
+            $this->roundResult($user_weapon, $computer_weapon);
 
-                $output->writeln('Computer win!');
-            } else {
-                $players['player']['stats']['draw']++;
-                $players['computer']['stats']['draw']++;
+            // Print round result 
+            $output->writeln("{$player->roundResult()}");
+            $output->writeln("{$computer->roundResult()}");
+            $output->writeln("-----------------------------------------");
 
-                $output->writeln('Draw!');
+            $playersVictories = [$player->getVictory(), $computer->getVictory()];
+
+            // Break loop when any player reach limit 
+            if (in_array($this->roundMaxWinner, $playersVictories)) {
+                break;
             }
 
-            $round++;
-        } while ($round <= $max_round);
+            $this->currentRound++;
+        } while ($this->currentRound <= $this->maxRound);
 
         // Display stats
-        $stats = $players;
+        $stats = $this->players;
 
         $stats = array_map(function ($player) {
-            return [$player['name'], $player['stats']['victory'], $player['stats']['draw'], $player['stats']['defeat']];
+            return $player->toArray();
         }, $stats);
 
         $table = new Table($output);
         $table
             ->setHeaders(['Player', 'Victory', 'Draw', 'Defeat'])
             ->setRows($stats);
-
         $table->render();
 
-        return 0;
+        return Command::SUCCESS;
+    }
+
+
+    /**
+     * Round result of the game
+     */
+    public function roundResult($userWeapon, $computerWeapon): void
+    {
+        // play the round
+        $result = $this->weapons[$computerWeapon]
+            ->play($this->weapons[$userWeapon]);
+
+        // get info players
+        $player = $this->players['player'];
+        $computer = $this->players['computer'];
+
+        switch ($result) {
+            case Weapon::VICTORY: // When Player wins
+                $player->addVictory();
+                $computer->addDefeat();
+                break;
+            case Weapon::DRAW: // When Draw 
+                $player->addDraw();
+                $computer->addDraw();
+                break;
+            case Weapon::DEFEAT: // When computer Lose 
+                $player->addDefeat();
+                $computer->addVictory();
+                break;
+
+            default:
+                throw new Exception("Error Round");
+                break;
+        }
     }
 }
