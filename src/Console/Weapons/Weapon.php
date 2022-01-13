@@ -1,14 +1,19 @@
 <?php
 
 namespace Uniqoders\Game\Console\Weapons;
+abstract class Weapon
+{
 
-use Uniqoders\Game\Console\Weapons\Move;
+    /**
+     * List of rules weapon can win
+     */
+    protected $rule_win = [ ];
 
-abstract class Weapon implements Move {
 
-    const VICTORY = "Victory";
-    const DEFEAT = "Defeat";
-    const DRAW = "Draw";
+    /**
+     * List of rules weapon can defeat
+     */
+    protected $rule_defeat = [ ];
 
     /**
      * Name weapon
@@ -27,6 +32,32 @@ abstract class Weapon implements Move {
      */
     public function setName($value) :void {
          $this->name = $value;
+    }
+
+    /**
+     * 
+     */
+    public function getRuleWin()
+    {
+       return $this->rule_win;
+    }
+
+
+    /**
+     * 
+     */
+    public function getRuleDefeat()
+    {
+       return $this->rule_defeat;
+    }
+
+
+    /**
+     * 
+     */
+    public function __toString()
+    {
+        return get_class($this);
     }
 
 }

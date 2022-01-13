@@ -13,8 +13,7 @@ class Game
     {
         $result = [];
         foreach ($players as $key => $player) {
-            $options = $player['options'] ?? [];
-            $result[$key] = new Player($player['name'], $player['type'], $options);
+            $result[$key] = new Player($player['name'], $player['type']);
         }
         return $result;
     }

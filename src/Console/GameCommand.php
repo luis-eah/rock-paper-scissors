@@ -89,7 +89,7 @@ class GameCommand extends Command
             $player = $this->players['player'];
             $computer = $this->players['computer'];
             
-            $optionPlayer = $player->getRoundOptions()[$this->currentRound] ?? array_rand($this->weapons);
+            $optionPlayer = array_rand($this->weapons);
 
             // ask player for weapon to use
             $question = new ChoiceQuestion('Please select your weapon', array_values($weaponsText), $optionPlayer);
@@ -102,15 +102,19 @@ class GameCommand extends Command
             $user_weapon = array_search($user_weapon_text, $weaponsText);
 
             // set weapon computer or generate random option
-            $computer_weapon = $computer->getRoundOptions()[$this->currentRound] ?? array_rand($this->weapons);
+            $computer_weapon = array_rand($this->weapons);
 
             $output->writeln('Computer has just selected: ' . $weaponsText[$computer_weapon]);
             
-            $this->roundResult($user_weapon, $computer_weapon);
+            $player->setWeapon($this->weapons[$user_weapon]);
+            $computer->setWeapon($this->weapons[$computer_weapon]);
+    
+            $round = new Round($player,$computer);
+            $round->fight();
 
             // Print round result 
-            $output->writeln("{$player->roundResult()}");
-            $output->writeln("{$computer->roundResult()}");
+            $output->writeln("{$player?->roundResult()}");
+            $output->writeln("{$computer?->roundResult()}");
             $output->writeln("-----------------------------------------");
 
             $playersVictories = [$player->getVictory(), $computer->getVictory()];
@@ -139,37 +143,4 @@ class GameCommand extends Command
         return Command::SUCCESS;
     }
 
-
-    /**
-     * Round result of the game
-     */
-    public function roundResult($userWeapon, $computerWeapon): void
-    {
-        // play the round
-        $result = $this->weapons[$computerWeapon]
-            ->play($this->weapons[$userWeapon]);
-
-        // get info players
-        $player = $this->players['player'];
-        $computer = $this->players['computer'];
-
-        switch ($result) {
-            case Weapon::VICTORY: // When Player wins
-                $player->addVictory();
-                $computer->addDefeat();
-                break;
-            case Weapon::DRAW: // When Draw 
-                $player->addDraw();
-                $computer->addDraw();
-                break;
-            case Weapon::DEFEAT: // When computer Lose 
-                $player->addDefeat();
-                $computer->addVictory();
-                break;
-
-            default:
-                throw new Exception("Error Round");
-                break;
-        }
-    }
 }

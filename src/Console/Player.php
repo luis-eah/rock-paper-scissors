@@ -30,17 +30,13 @@ class Player
     private $lastRound;
 
 
-    private $roundOptions;
-
-
     /**
      * construct class
      */
-    function __construct($name = 'Player # 1', $type = self::HUMAN, $options = [])
+    function __construct($name = 'Player # 1', $type = self::HUMAN)
     {
         $this->name     = $name;
         $this->type     = $type;
-        $this->roundOptions  = $options;
         $this->victory  = 0;
         $this->defeat   = 0;
         $this->draw     = 0;
@@ -59,7 +55,7 @@ class Player
      */
     public function addVictory(): void
     {
-        $this->setLastRound(Weapon::VICTORY);
+        $this->setLastRound(Round::VICTORY);
         $this->victory++;
     }
 
@@ -68,7 +64,7 @@ class Player
      */
     public function addDefeat(): void
     {
-        $this->setLastRound(Weapon::DEFEAT);
+        $this->setLastRound(Round::DEFEAT);
         $this->defeat++;
     }
 
@@ -77,7 +73,7 @@ class Player
      */
     public function addDraw(): void
     {
-        $this->setLastRound(Weapon::DRAW);
+        $this->setLastRound(Round::DRAW);
         $this->draw++;
     }
 
@@ -105,21 +101,12 @@ class Player
         return $this->draw;
     }
 
-
     /**
      * 
      */
     public function getLastRound(): string
     {
         return $this->lastRound;
-    }
-
-    /**
-     * 
-     */
-    public function getRoundOptions(): array
-    {
-        return $this->roundOptions;
     }
 
     /**
@@ -139,7 +126,6 @@ class Player
         $this->defeat = $value;
     }
 
-
     /**
      * set Victory Attribute
      */
@@ -156,7 +142,6 @@ class Player
         $this->defeat = $value;
     }
 
-
     /**
      * set Last round Attribute
      */
@@ -165,6 +150,41 @@ class Player
         $this->lastRound = $value;
     }
 
+    /**
+     * set weapon player
+     */
+    public function setWeapon(Weapon $weapon)
+    {
+        $this->lastWeapon = $weapon;
+    }
+
+    /**
+     * get weapon player
+     */
+    public function getWeapon()
+    {
+        return $this->lastWeapon;
+    }
+
+    /**
+     * Print the result of the round 
+     */
+    public function roundResult(): string
+    {
+        $result = "";
+        switch ($this->getLastRound()) {
+            case Round::VICTORY: // When Player wins
+                $result = "{$this->getName()} Win!";
+                break;
+            case Round::DRAW:  // When Draw
+                $result = "{$this->getName()} Draw!";
+                break;
+            case Round::DEFEAT:  // When computer Lose 
+                $result = "{$this->getName()} Defeat!";
+                break;
+        }
+        return $result;
+    }
 
     /**
      * return class attributes as array
@@ -185,27 +205,5 @@ class Player
     public function __toString()
     {
         return json_encode($this->toArray());
-    }
-
-
-
-    /**
-     * Print the result of the round 
-     */
-    public function roundResult(): string
-    {
-        $result = "";
-        switch ($this->getLastRound()) {
-            case Weapon::VICTORY: // When Player wins
-                $result = "{$this->getName()} Win!";
-                break;
-            case Weapon::DRAW:  // When Draw
-                $result = "{$this->getName()} Draw!";
-                break;
-            case Weapon::DEFEAT:  // When computer Lose 
-                $result = "{$this->getName()} Defeat!";
-                break;
-        }
-        return $result;
     }
 }

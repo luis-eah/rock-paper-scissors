@@ -37,17 +37,18 @@
       1. ¿Cuales fueron los desafíos?,
 
 
-      **R// Implementar los principios de la programación orientado a objetos (Herencia, Polimorfismo, Encapsulamiento), Todavia considero que me falta mucha practica en la creación de pruebas unitarias de codigo, no habia manejado comandos de symfony y desconozco como se puedan hacer las pruebas unitarias.**
+      **R// Implementar los principios de la programación orientado a objetos (Herencia, Polimorfismo, Encapsulamiento) en el ejercicio anterio, Todavia considero que me falta mucha practica en la creación de pruebas unitarias de codigo, no habia manejado comandos de symfony y desconozco como se puedan hacer las pruebas unitarias, pero deacuerdo a la ayuda suministrada se hicieron algunas pruebas unitarias.**
 
       2. ¿Como los resolviste?, 
 
 
-      **R// Utilizando  el patrón de comportamiento double dipatch, permite abstraer las implementaciones para cada diferencia entre cada objeto.**
+      **R// De acuerdo a la retroalimentación se cambia para que las reglas del juego se definan como atributos dentro de cada clase del tipo de movimiento(Weapon).**
 
       3. ¿Por qué lo hiciste de esta manera? 
 
 
-      **R// Es uno de los patrones que permite utilizar los principios orientados a objetos, evaluados en esta prueba**
+      **R// Existen varios formas de realizar esta implementación se definio bajar el nivel de complejida del codigo y utilizar una solución más práctica**
+
    2. **Solo** se podrá desarrollar en **PHP y consola** 
    3. El código deberá implementar buenas prácticas (como POO, patrones de diseño o código limpio y comentado)
    4. El código deberá ser extensible en el futuro (cambiar el número de rondas máximas, agregar nuevas reglas…)
@@ -59,8 +60,8 @@
    Podrás usar tu entorno favorito para ejecutar en consola la aplicación, nosotros usamos (Linux o Windows + WSL2) + Docker
 
    1. Compilar la imagen de docker `docker-compose build`
-   2. Compilar la imagen de docker `docker-compose up -d`
-   3. Compilar la imagen de docker `docker-compose exec -it test bash`
+   2. Subir los servicios de docker `docker-compose up -d`
+   3. Ingresar el contenedor de la prueba `docker-compose exec -it test bash`
    
    4. Como ejecutar el juego: ``php console game [name]``
    5. Como ejecutar el test ``vendor/bin/phpunit .``
